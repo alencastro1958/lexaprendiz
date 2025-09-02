@@ -14,6 +14,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// 🔹 Rota para gerar resposta com IA e salvar no banco
 app.post('/api/chat', async (req, res) => {
   const { question } = req.body;
 
@@ -34,7 +35,6 @@ app.post('/api/chat', async (req, res) => {
 
     const answer = completion.choices[0].message.content;
 
-    // ✅ Salvar no banco com campos ajustados
     await prisma.consulta.create({
       data: {
         perguntaA: question,
@@ -46,6 +46,43 @@ app.post('/api/chat', async (req, res) => {
   } catch (error) {
     console.error('Erro na API OpenAI:', error.message);
     res.status(500).json({ error: 'Erro ao gerar resposta com IA.' });
+  }
+});
+
+// 🔹 Rota para listar histórico com filtros opcionais
+app.get('/api/historico', async (req, res) => {
+  const { busca, data } = req.query;
+
+  try {
+    const consultas = await prisma.consulta.findMany({
+      where: {
+        AND: [
+          busca
+            ? {
+                OR: [
+                  { perguntaA: { contains: busca, mode: 'insensitive' } },
+                  { respostaA: { contains: busca, mode: 'insensitive' } },
+                ],
+              }
+            : {},
+          data
+            ? {
+                criaçãoEm: {
+                  gte: new Date(data),
+                },
+              }
+            : {},
+        ],
+      },
+      orderBy: {
+        criaçãoEm: 'desc',
+      },
+    });
+
+    res.json(consultas);
+  } catch (error) {
+    console.error('Erro ao buscar histórico:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar histórico.' });
   }
 });
 
