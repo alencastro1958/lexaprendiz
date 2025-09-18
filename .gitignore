@@ -1,7 +1,60 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-node_modules
-# Keep environment variables out of version control
-.env
-
+# Node.js
+node_modules/
+npm-debug.log*
 /generated/prisma
+
+
+# Ambiente
+.env
+# Permite versionar exemplos
+!.env.example
+!.env*.example
+
+# Prisma
+prisma/dev.db
+prisma/*.db
+prisma/*.sqlite
+prisma/migrations/*/README.md
+
+# Logs
+logs/
+*.log
+
+# IDEs e SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build/output
+/dist/
+/build/
+coverage/
+
+# Testes temporários
+*.test.db
+*.sqlite
+
+# Outros
+*.swp
+*.swo
+*.bak
+
+# Next.js
+.next/
+
+# React
+*.env.local
+
+# Ignore arquivos de produção do Render
+render.yaml
+
+# Ignore arquivos de lock locais
+package-lock.local.json
+
+# Ignore arquivos de cache
+.cache/
+
+# Ignore arquivos de histórico do Prisma
+prisma/.DS_Store
+prisma/.env

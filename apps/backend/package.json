@@ -1,0 +1,24 @@
+{
+  "name": "lexaprendiz-backend",
+  "version": "1.0.0",
+  "description": "API LexAprendiz (Express + Prisma + OpenAI)",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+  "dev": "node index.js",
+  "start": "node index.js",
+  "prisma:generate": "prisma generate",
+  "db:reset": "powershell -NoLogo -Command \"Remove-Item prisma/dev.db -ErrorAction SilentlyContinue; npx prisma db push\"",
+  "db:reset:unix": "rm -f prisma/dev.db && npx prisma db push"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.15.0",
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "lexaprendiz-monorepo": "file:../..",
+    "openai": "^5.18.1",
+    "prisma": "^6.15.0"
+  }
+}
