@@ -1,0 +1,7 @@
+-- CreateTable
+CREATE TABLE "Consulta" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "pergunta" TEXT NOT NULL,
+    "resposta" TEXT NOT NULL,
+    "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

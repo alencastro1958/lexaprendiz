@@ -1,0 +1,24 @@
+{
+  "name": "lexaprendiz-api",
+  "version": "1.0.0",
+  "description": "API intermediária para consulta da Lei da Aprendizagem e artigos jurídicos",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["lei-da-aprendizagem", "api", "jurídico", "nodejs", "express"],
+  "author": "Diogo",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.15.0",
+    "axios": "^1.11.0",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "openai": "^5.16.0",
+    "prisma": "^6.15.0"
+  }
+}
