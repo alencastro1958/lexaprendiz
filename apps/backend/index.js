@@ -103,5 +103,27 @@ app.get('/api/historico', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Verifica a validade/uso da OPENAI_API_KEY
+app.get('/health/ai', async (req, res) => {
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(200).json({ ok: false, status: 'no-key', message: 'OPENAI_API_KEY ausente.' });
+  }
+  try {
+    // Chamada leve: listar modelos (não gera uso de tokens de completions)
+    await openai.models.list();
+    return res.status(200).json({ ok: true, status: 'ok' });
+  } catch (error) {
+    const status = error.status || error.response?.status;
+    const payload = { ok: false, status: status || 500, message: error.message };
+    if (status === 401) {
+      return res.status(401).json({ ...payload, reason: 'invalid-api-key' });
+    }
+    if (status === 429) {
+      return res.status(429).json({ ...payload, reason: 'quota-exceeded' });
+    }
+    return res.status(500).json({ ...payload, reason: 'unknown' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Backend LexAprendiz em http://localhost:' + PORT));
