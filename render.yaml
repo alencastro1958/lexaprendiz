@@ -7,7 +7,7 @@ services:
     plan: free
     envVars:
       - key: PYTHON_VERSION
-        value: "3.11"
+        value: "3.12.11"
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
