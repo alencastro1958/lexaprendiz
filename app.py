@@ -1,10 +1,11 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_required, current_user
 from dotenv import load_dotenv
 from openai import OpenAI
 from models import db, User, Question
 from auth import auth
+from sqlalchemy import text
 
 load_dotenv()
 
@@ -17,9 +18,25 @@ else:
     client = OpenAI(api_key=openai_api_key)
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+
+# Database: prefer DATABASE_URL (Render PostgreSQL) and fallback to local SQLite
+database_url = os.getenv("DATABASE_URL", "sqlite:///database.db")
+# Render and many providers expose postgres://; SQLAlchemy needs postgresql+psycopg2://
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "fallback-secret-key-for-development")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Ensure SSL for managed Postgres (Render) and keep healthy connections
+if database_url.startswith("postgresql"):
+    engine_opts = app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {})
+    connect_args = dict(engine_opts.get("connect_args", {}))
+    connect_args.setdefault("sslmode", "require")
+    engine_opts["connect_args"] = connect_args
+    engine_opts["pool_pre_ping"] = True
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = engine_opts
 db.init_app(app)
 
 login_manager = LoginManager()
@@ -61,6 +78,17 @@ def dashboard():
 
     historico = Question.query.filter_by(user_id=current_user.id).order_by(Question.timestamp.desc()).all()
     return render_template("dashboard.html", resposta=resposta, pergunta=pergunta, historico=historico)
+
+# Public health check endpoint for Render
+@app.route("/healthz", methods=["GET"])  # nosec - simple liveness/readiness
+def healthz():
+    try:
+        # quick DB check (works for both SQLite and Postgres)
+        with app.app_context():
+            db.session.execute(text("SELECT 1"))
+        return jsonify({"status": "ok"}), 200
+    except Exception as exc:  # pragma: no cover
+        return jsonify({"status": "error", "detail": str(exc)}), 503
 
 with app.app_context():
     db.create_all()
