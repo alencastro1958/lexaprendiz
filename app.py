@@ -10,6 +10,8 @@ from auth import auth, bcrypt
 from sqlalchemy import text
 from sqlalchemy import inspect
 import urllib.parse
+import requests
+import xml.etree.ElementTree as ET
 
 load_dotenv()
 
@@ -151,8 +153,38 @@ def dashboard():
                     # Dê preferência às fontes gov.br e .jus.br
                     return bases
 
+                def fetch_lexml_sources(query: str, limit: int = 5):
+                    # LexML API de busca (Atom): https://www.lexml.gov.br/ (servicos.lexml.gov.br)
+                    # Exemplo: https://servicos.lexml.gov.br/busca.atom?q=Lei%2010.097
+                    url = f"https://servicos.lexml.gov.br/busca.atom?q={urllib.parse.quote_plus(query)}"
+                    items = []
+                    try:
+                        r = requests.get(url, timeout=6)
+                        if r.status_code == 200 and r.text:
+                            root = ET.fromstring(r.text)
+                            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+                            for entry in root.findall('atom:entry', ns)[:limit]:
+                                title_el = entry.find('atom:title', ns)
+                                link_el = entry.find('atom:link', ns)
+                                title = title_el.text.strip() if title_el is not None and title_el.text else 'Documento LexML'
+                                href = link_el.get('href') if link_el is not None else None
+                                if href:
+                                    items.append((f"LexML: {title}", href))
+                    except Exception:
+                        pass
+                    return items
+
                 fontes = official_sources(pergunta)
-                fontes_texto = "\n".join([f"- {nome}: {url}" for nome, url in fontes])
+                # Enriquecer com LexML (gratuito)
+                fontes_lexml = fetch_lexml_sources(pergunta)
+                # Deduplicar por URL
+                seen = set()
+                all_fontes = []
+                for nome, url in [*fontes_lexml, *fontes]:
+                    if url not in seen:
+                        seen.add(url)
+                        all_fontes.append((nome, url))
+                fontes_texto = "\n".join([f"- {nome}: {url}" for nome, url in all_fontes])
 
                 completion = client.chat.completions.create(
                     model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
