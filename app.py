@@ -234,6 +234,23 @@ def healthz():
     except Exception as exc:  # pragma: no cover
         return jsonify({"status": "error", "detail": str(exc)}), 503
 
+# Debug endpoint to check admin configuration
+@app.route("/debug/admin")
+@login_required
+def debug_admin():
+    admin_emails = os.getenv("ADMIN_EMAILS", "")
+    admin_list = [e.strip().lower() for e in admin_emails.split(",") if e.strip()]
+    current_email = (current_user.email or "").lower()
+    is_admin = current_email in admin_list
+    
+    return jsonify({
+        "current_user_email": current_email,
+        "admin_emails_env": admin_emails,
+        "admin_list": admin_list,
+        "is_admin": is_admin,
+        "user_authenticated": current_user.is_authenticated
+    })
+
 with app.app_context():
     db.create_all()
     _ensure_profile_columns()
