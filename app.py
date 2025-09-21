@@ -165,6 +165,7 @@ def dashboard():
                             "- NUNCA invente informações. Se não houver fonte oficial, diga 'Não sei com segurança' e explique como encontrar.\n"
                             "- Use EXCLUSIVAMENTE as fontes fornecidas a seguir como referência. Se elas não bastarem, peça ao usuário para refinar a pergunta.\n"
                             "- SEMPRE liste as fontes oficiais no final (links para: gov.br, planalto.gov.br, mte.gov.br, camara.leg.br, senado.leg.br, mpt.mp.br, tst.jus.br, stf.jus.br, stj.jus.br).\n"
+                            "- Não cite portais comerciais pagos (por exemplo: JusBrasil); priorize somente domínios .gov.br, .jus.br e .leg.br.\n"
                             "- Se a pergunta não puder ser respondida com base em fontes confiáveis, não responda e explique."
                         )},
                         {"role": "user", "content": f"Nome do usuário: {first_name}. Pergunta: {pergunta}.\nFontes oficiais sugeridas:\n{fontes_texto}"}
