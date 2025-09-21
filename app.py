@@ -9,6 +9,7 @@ from models import db, User, Question
 from auth import auth, bcrypt
 from sqlalchemy import text
 from sqlalchemy import inspect
+import urllib.parse
 
 load_dotenv()
 
@@ -98,6 +99,16 @@ def _ensure_profile_columns():
             statements.append("ALTER TABLE \"user\" ADD COLUMN city VARCHAR(120)")
         if 'state' not in cols:
             statements.append("ALTER TABLE \"user\" ADD COLUMN state VARCHAR(2)")
+        if 'cep' not in cols:
+            statements.append("ALTER TABLE \"user\" ADD COLUMN cep VARCHAR(9)")
+        if 'address' not in cols:
+            statements.append("ALTER TABLE \"user\" ADD COLUMN address VARCHAR(200)")
+        if 'number' not in cols:
+            statements.append("ALTER TABLE \"user\" ADD COLUMN number VARCHAR(20)")
+        if 'complement' not in cols:
+            statements.append("ALTER TABLE \"user\" ADD COLUMN complement VARCHAR(100)")
+        if 'neighborhood' not in cols:
+            statements.append("ALTER TABLE \"user\" ADD COLUMN neighborhood VARCHAR(120)")
         for stmt in statements:
             try:
                 db.session.execute(text(stmt))
@@ -122,6 +133,27 @@ def dashboard():
                 resposta = "Erro: API do OpenAI não configurada. Configure a variável OPENAI_API_KEY no Render."
             else:
                 first_name = (current_user.name or "").strip().split(" ")[0] or "usuário"
+                # Preparar fontes oficiais (heurística por palavra-chave)
+                def official_sources(query: str):
+                    q = urllib.parse.quote_plus(query)
+                    bases = [
+                        ("Planalto", f"https://www.planalto.gov.br/ccivil_03/leis/leis_2001/l10097.htm"),
+                        ("DOU", f"https://www.in.gov.br/en/web/guest/busca/-/buscar?q={q}"),
+                        ("MTE", f"https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/aprendizagem"),
+                        ("MPT", f"https://mpt.mp.br/assuntos/aprendizagem"),
+                        ("TST", f"https://www.tst.jus.br/busca?q={q}"),
+                        ("STF", f"https://portal.stf.jus.br/busca/?sitesearch=stf.jus.br&search={q}"),
+                        ("STJ", f"https://www.stj.jus.br/sites/portalp/Paginas/Comunicacao/Pesquisa.aspx?termo={q}"),
+                        ("CNJ", f"https://www.cnj.jus.br/?s={q}"),
+                        ("Câmara", f"https://www.camara.leg.br/busca-portal?query={q}"),
+                        ("Senado", f"https://www25.senado.leg.br/web/atividade/busca?_search={q}"),
+                    ]
+                    # Dê preferência às fontes gov.br e .jus.br
+                    return bases
+
+                fontes = official_sources(pergunta)
+                fontes_texto = "\n".join([f"- {nome}: {url}" for nome, url in fontes])
+
                 completion = client.chat.completions.create(
                     model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
                     messages=[
@@ -131,10 +163,11 @@ def dashboard():
                             "- Sempre cumprimente o usuário pelo primeiro nome e se apresente como 'LexAprendiz' antes da resposta.\n"
                             "- Responda com linguagem simples e objetiva.\n"
                             "- NUNCA invente informações. Se não houver fonte oficial, diga 'Não sei com segurança' e explique como encontrar.\n"
-                            "- SEMPRE liste as fontes oficiais no final (links para: gov.br, planalto.gov.br, mte.gov.br, camara.leg.br, senado.leg.br, mpt.mp.br, tst.jus.br, etc.).\n"
+                            "- Use EXCLUSIVAMENTE as fontes fornecidas a seguir como referência. Se elas não bastarem, peça ao usuário para refinar a pergunta.\n"
+                            "- SEMPRE liste as fontes oficiais no final (links para: gov.br, planalto.gov.br, mte.gov.br, camara.leg.br, senado.leg.br, mpt.mp.br, tst.jus.br, stf.jus.br, stj.jus.br).\n"
                             "- Se a pergunta não puder ser respondida com base em fontes confiáveis, não responda e explique."
                         )},
-                        {"role": "user", "content": f"Nome do usuário: {first_name}. Pergunta: {pergunta}"}
+                        {"role": "user", "content": f"Nome do usuário: {first_name}. Pergunta: {pergunta}.\nFontes oficiais sugeridas:\n{fontes_texto}"}
                     ],
                     max_tokens=int(os.getenv("OPENAI_MAX_TOKENS", "500"))
                 )
@@ -179,9 +212,12 @@ def _is_admin() -> bool:
 def export_users_csv():
     if not _is_admin():
         return redirect(url_for('auth.login'))
-    rows = User.query.with_entities(User.id, User.name, User.email, User.cpf, User.city, User.state).order_by(User.id).all()
+    rows = User.query.with_entities(
+        User.id, User.name, User.email, User.cpf, User.city, User.state,
+        User.cep, User.address, User.number, User.complement, User.neighborhood
+    ).order_by(User.id).all()
     def generate():
-        yield "id,nome,email,cpf,cidade,estado\n"
+        yield "id,nome,email,cpf,cidade,estado,cep,endereco,numero,complemento,bairro\n"
         for r in rows:
             # Escape commas and quotes as needed (basic handling)
             vals = [
@@ -191,6 +227,11 @@ def export_users_csv():
                 (r.cpf or "").replace('"','""'),
                 (r.city or "").replace('"','""'),
                 (r.state or "").replace('"','""'),
+                (r.cep or "").replace('"','""'),
+                (r.address or "").replace('"','""'),
+                (r.number or "").replace('"','""'),
+                (r.complement or "").replace('"','""'),
+                (r.neighborhood or "").replace('"','""'),
             ]
             yield ",".join([f'"{v}"' for v in vals]) + "\n"
     return Response(generate(), mimetype='text/csv', headers={

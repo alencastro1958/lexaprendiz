@@ -8,7 +8,7 @@
 <body class="bg-light">
     <div class="container mt-5">
         <h2 class="text-center mb-4">📝 Cadastro no LexAprendiz</h2>
-        <form method="POST" class="card p-4 shadow-sm">
+    <form method="POST" class="card p-4 shadow-sm" id="register-form">
             <div class="mb-3">
                 <label for="name" class="form-label">Nome completo</label>
                 <input type="text" name="name" class="form-control" required>
@@ -31,6 +31,30 @@
                     <input type="text" name="state" class="form-control" maxlength="2" placeholder="SP" required>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="cep" class="form-label">CEP</label>
+                    <input type="text" name="cep" id="cep" class="form-control" placeholder="00000-000" minlength="8" maxlength="9">
+                </div>
+                <div class="col-md-9 mb-3">
+                    <label for="address" class="form-label">Endereço</label>
+                    <input type="text" name="address" id="address" class="form-control" placeholder="Rua/Av, etc.">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="number" class="form-label">Número</label>
+                    <input type="text" name="number" id="number" class="form-control" placeholder="Nº">
+                </div>
+                <div class="col-md-5 mb-3">
+                    <label for="neighborhood" class="form-label">Bairro</label>
+                    <input type="text" name="neighborhood" id="neighborhood" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="complement" class="form-label">Complemento</label>
+                    <input type="text" name="complement" id="complement" class="form-control" placeholder="Opcional">
+                </div>
+            </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Senha</label>
                 <input type="password" name="password" class="form-control" required>
@@ -39,5 +63,21 @@
             <p class="mt-3 text-center">Já tem conta? <a href="/login">Faça login</a></p>
         </form>
     </div>
+<script>
+// Consulta ViaCEP ao sair do campo CEP
+document.getElementById('cep').addEventListener('blur', async function() {
+    const raw = this.value.replace(/\D/g, '');
+    if (raw.length !== 8) return;
+    try {
+        const r = await fetch(`https://viacep.com.br/ws/${raw}/json/`);
+        const data = await r.json();
+        if (data.erro) return;
+        document.getElementById('address').value = `${data.logradouro}`.trim();
+        document.querySelector('input[name="city"]').value = `${data.localidade}`.trim();
+        document.querySelector('input[name="state"]').value = `${data.uf}`.trim();
+        document.getElementById('neighborhood').value = `${data.bairro}`.trim();
+    } catch (e) { /* silencioso */ }
+});
+</script>
 </body>
 </html>

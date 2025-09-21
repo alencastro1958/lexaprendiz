@@ -12,6 +12,12 @@ class User(db.Model, UserMixin):
     cpf = db.Column(db.String(14), unique=True, index=True)  # 000.000.000-00 ou somente dígitos
     city = db.Column(db.String(120))
     state = db.Column(db.String(2))   # UF (ex.: SP, RJ)
+    # Endereço
+    cep = db.Column(db.String(9), index=True)  # 00000-000
+    address = db.Column(db.String(200))        # Logradouro (ex.: Rua X)
+    number = db.Column(db.String(20))          # Número
+    complement = db.Column(db.String(100))     # Complemento
+    neighborhood = db.Column(db.String(120))   # Bairro
 
     questions = db.relationship('Question', backref='user', lazy=True)
 
