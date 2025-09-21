@@ -118,7 +118,13 @@ def _ensure_profile_columns():
             except Exception:
                 db.session.rollback()
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/")
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return render_template("index.html")
+
+@app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
     resposta = ""
