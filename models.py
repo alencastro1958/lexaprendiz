@@ -5,8 +5,14 @@ db = SQLAlchemy()
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False, index=True)
     password = db.Column(db.String(150), nullable=False)
+    # Perfil
+    name = db.Column(db.String(150))  # Nome completo
+    cpf = db.Column(db.String(14), unique=True, index=True)  # 000.000.000-00 ou somente dígitos
+    city = db.Column(db.String(120))
+    state = db.Column(db.String(2))   # UF (ex.: SP, RJ)
+
     questions = db.relationship('Question', backref='user', lazy=True)
 
 class Question(db.Model):

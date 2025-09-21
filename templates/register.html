@@ -10,8 +10,26 @@
         <h2 class="text-center mb-4">📝 Cadastro no LexAprendiz</h2>
         <form method="POST" class="card p-4 shadow-sm">
             <div class="mb-3">
+                <label for="name" class="form-label">Nome completo</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="mb-3">
                 <label for="email" class="form-label">E-mail</label>
                 <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="cpf" class="form-label">CPF</label>
+                    <input type="text" name="cpf" class="form-control" placeholder="Somente números" minlength="11" maxlength="14" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="city" class="form-label">Cidade</label>
+                    <input type="text" name="city" class="form-control" required>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label for="state" class="form-label">UF</label>
+                    <input type="text" name="state" class="form-control" maxlength="2" placeholder="SP" required>
+                </div>
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Senha</label>

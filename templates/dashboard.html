@@ -10,8 +10,10 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">⚖️ LexAprendiz</a>
             <div class="d-flex">
+                <a href="/profile" class="btn btn-outline-light me-2">Meu perfil</a>
                 {% if is_admin %}
                 <a href="/admin" class="btn btn-outline-light me-2">Admin</a>
+                <a href="/admin/export/users.csv" class="btn btn-warning me-2">Exportar usuários (CSV)</a>
                 {% endif %}
                 <a href="/logout" class="btn btn-outline-light">Sair</a>
             </div>
@@ -20,6 +22,9 @@
 
     <div class="container mt-4">
         <h3 class="mb-3">📚 Faça sua pergunta sobre a Lei da Aprendizagem</h3>
+        <div class="alert alert-warning" role="alert">
+            Antes de perguntar, garanta que seu perfil está completo com nome, CPF, cidade e UF. <a href="/profile" class="alert-link">Clique aqui</a> para atualizar.
+        </div>
         <form method="POST" class="mb-4">
             <textarea name="pergunta" rows="4" class="form-control" placeholder="Digite sua dúvida..." required>{{ pergunta }}</textarea>
             <button type="submit" class="btn btn-primary mt-2">Perguntar</button>
