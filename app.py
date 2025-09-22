@@ -178,6 +178,44 @@ def check_duplicates():
     
     return jsonify(result)
 
+@app.route("/debug/database")
+def debug_database():
+    """Endpoint para verificar estado do banco de dados"""
+    try:
+        total_users = User.query.count()
+        
+        # Últimos 10 usuários
+        recent_users = User.query.order_by(User.id.desc()).limit(10).all()
+        users_data = []
+        for user in recent_users:
+            users_data.append({
+                'id': user.id,
+                'email': user.email,
+                'cpf': user.cpf[:3] + '***' + user.cpf[-2:] if user.cpf else None,  # Mascarado
+                'name': user.name[:10] + '...' if user.name and len(user.name) > 10 else user.name
+            })
+        
+        # Duplicatas
+        email_duplicates = db.session.query(User.email, db.func.count(User.email).label('count')).group_by(User.email).having(db.func.count(User.email) > 1).all()
+        cpf_duplicates = db.session.query(User.cpf, db.func.count(User.cpf).label('count')).group_by(User.cpf).having(db.func.count(User.cpf) > 1).all()
+        
+        return jsonify({
+            "total_users": total_users,
+            "recent_users": users_data,
+            "email_duplicates": len(email_duplicates),
+            "cpf_duplicates": len(cpf_duplicates),
+            "email_duplicate_details": [{"email": email, "count": count} for email, count in email_duplicates],
+            "cpf_duplicate_details": [{"cpf": cpf[:3] + '***' + cpf[-2:] if cpf else None, "count": count} for cpf, count in cpf_duplicates],
+            "timestamp": str(__import__('datetime').datetime.now()),
+            "version": "510b505"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "timestamp": str(__import__('datetime').datetime.now())
+        })
+
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():

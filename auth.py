@@ -140,6 +140,7 @@ def register():
         neighborhood = request.form.get("neighborhood", "").strip()
 
         try:
+            print(f"DEBUG CADASTRO: Criando usuário com email: {email}, CPF: {cpf_formatted}")
             user = User(
                 email=email, 
                 password=password, 
@@ -154,13 +155,17 @@ def register():
                 neighborhood=neighborhood
             )
             db.session.add(user)
+            print(f"DEBUG CADASTRO: Usuário adicionado à sessão")
             db.session.commit()
+            print(f"DEBUG CADASTRO: Commit realizado, usuário ID: {user.id}")
             
             # Login automático após cadastro
             login_user(user)
+            print(f"DEBUG CADASTRO: Login automático realizado para usuário ID: {user.id}")
             flash("Cadastro realizado com sucesso! Bem-vindo ao LexAprendiz!")
             return redirect(url_for("dashboard"))
         except Exception as e:
+            print(f"DEBUG CADASTRO: Erro durante cadastro: {str(e)}")
             db.session.rollback()
             flash(f"Erro ao criar conta: {str(e)}. Tente novamente.")
             return render_template("register.html")
