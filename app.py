@@ -107,6 +107,36 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template("index.html")
 
+@app.route("/debug/validation")
+def debug_validation():
+    """Endpoint para testar se a validação está funcionando"""
+    try:
+        from utils import validate_cpf, clean_cpf
+        utils_imported = True
+    except:
+        utils_imported = False
+    
+    test_cpf = "23232323232323"
+    
+    if utils_imported:
+        cpf_clean = clean_cpf(test_cpf)
+        is_valid = validate_cpf(cpf_clean)
+    else:
+        # Fallback validation
+        import re
+        cpf_clean = re.sub(r'[^0-9]', '', test_cpf)
+        is_valid = len(cpf_clean) == 11
+    
+    return jsonify({
+        "utils_imported": utils_imported,
+        "test_cpf": test_cpf,
+        "cpf_clean": cpf_clean,
+        "cpf_length": len(cpf_clean),
+        "is_valid": is_valid,
+        "timestamp": str(__import__('datetime').datetime.now()),
+        "version": "f205a37"
+    })
+
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
