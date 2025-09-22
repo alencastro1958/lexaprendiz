@@ -46,10 +46,18 @@ def login():
     if request.method == "POST":
         email = request.form["email"].strip().lower()
         password = request.form["password"]
+        print(f"DEBUG LOGIN: Tentativa de login para email: {email}")
         user = User.query.filter_by(email=email).first()
-        if user and bcrypt.check_password_hash(user.password, password):
-            login_user(user)
-            return redirect(url_for("dashboard"))
+        print(f"DEBUG LOGIN: Usuário encontrado: {user is not None}")
+        if user:
+            print(f"DEBUG LOGIN: Verificando senha...")
+            password_valid = bcrypt.check_password_hash(user.password, password)
+            print(f"DEBUG LOGIN: Senha válida: {password_valid}")
+            if password_valid:
+                login_user(user)
+                print(f"DEBUG LOGIN: Login realizado com sucesso")
+                return redirect(url_for("dashboard"))
+        print(f"DEBUG LOGIN: Login falhou")
         flash("Login inválido.")
     return render_template("login.html")
 
