@@ -97,22 +97,37 @@ def register():
         # Formata CPF para armazenamento consistente
         cpf_formatted = format_cpf(cpf_clean)
         
-        # Verificação rigorosa de duplicatas
+        # Verificação rigorosa de duplicatas com logs detalhados
+        print(f"DEBUG DUPLICATAS: Verificando email: {email}")
         existing_email = User.query.filter_by(email=email).first()
         if existing_email:
+            print(f"DEBUG DUPLICATAS: Email {email} já existe (ID: {existing_email.id})")
             flash("Este e-mail já está cadastrado. Use outro e-mail ou faça login.")
             return render_template("register.html")
         
+        print(f"DEBUG DUPLICATAS: Verificando CPF formatado: {cpf_formatted}")
         existing_cpf = User.query.filter_by(cpf=cpf_formatted).first()
         if existing_cpf:
+            print(f"DEBUG DUPLICATAS: CPF formatado {cpf_formatted} já existe (ID: {existing_cpf.id})")
             flash("Este CPF já está cadastrado. Cada CPF pode ter apenas uma conta.")
             return render_template("register.html")
         
-        # Verificação adicional por CPF limpo (sem formatação)
+        print(f"DEBUG DUPLICATAS: Verificando CPF limpo: {cpf_clean}")
         existing_cpf_clean = User.query.filter_by(cpf=cpf_clean).first()
         if existing_cpf_clean:
+            print(f"DEBUG DUPLICATAS: CPF limpo {cpf_clean} já existe (ID: {existing_cpf_clean.id})")
             flash("Este CPF já está cadastrado. Cada CPF pode ter apenas uma conta.")
             return render_template("register.html")
+        
+        # Verificação adicional case-insensitive para email
+        print(f"DEBUG DUPLICATAS: Verificação case-insensitive email")
+        existing_email_ci = User.query.filter(User.email.ilike(email)).first()
+        if existing_email_ci:
+            print(f"DEBUG DUPLICATAS: Email case-insensitive {email} já existe (ID: {existing_email_ci.id})")
+            flash("Este e-mail já está cadastrado. Use outro e-mail ou faça login.")
+            return render_template("register.html")
+        
+        print(f"DEBUG DUPLICATAS: Nenhuma duplicata encontrada, prosseguindo com cadastro")
         
         # Gera hash da senha
         password = bcrypt.generate_password_hash(password_raw).decode("utf-8")

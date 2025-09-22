@@ -137,3 +137,53 @@ def export_users_csv():
     return Response(generate(), mimetype='text/csv', headers={
         'Content-Disposition': 'attachment; filename=usuarios_lexaprendiz.csv'
     })
+
+@admin_auth.route('/cleanup-duplicates', methods=['GET', 'POST'])
+def cleanup_duplicates():
+    """Remove duplicatas do banco de dados"""
+    if not is_admin_authenticated():
+        return redirect(url_for('admin_auth.admin_login'))
+    
+    if request.method == 'GET':
+        # Listar duplicatas para revisão
+        # Emails duplicados
+        email_duplicates = db.session.query(User.email, db.func.count(User.email).label('count')).group_by(User.email).having(db.func.count(User.email) > 1).all()
+        
+        # CPFs duplicados
+        cpf_duplicates = db.session.query(User.cpf, db.func.count(User.cpf).label('count')).group_by(User.cpf).having(db.func.count(User.cpf) > 1).all()
+        
+        return render_template('admin_cleanup.html', 
+                               email_duplicates=email_duplicates, 
+                               cpf_duplicates=cpf_duplicates)
+    
+    elif request.method == 'POST':
+        try:
+            removed_count = 0
+            
+            # Remove duplicatas de email (mantém o mais antigo)
+            email_duplicates = db.session.query(User.email).group_by(User.email).having(db.func.count(User.email) > 1).all()
+            for (email,) in email_duplicates:
+                duplicate_users = User.query.filter_by(email=email).order_by(User.id).all()
+                # Mantém o primeiro, remove os demais
+                for user in duplicate_users[1:]:
+                    db.session.delete(user)
+                    removed_count += 1
+            
+            # Remove duplicatas de CPF (mantém o mais antigo)
+            cpf_duplicates = db.session.query(User.cpf).group_by(User.cpf).having(db.func.count(User.cpf) > 1).all()
+            for (cpf,) in cpf_duplicates:
+                if cpf:  # Ignora CPFs nulos
+                    duplicate_users = User.query.filter_by(cpf=cpf).order_by(User.id).all()
+                    # Mantém o primeiro, remove os demais
+                    for user in duplicate_users[1:]:
+                        db.session.delete(user)
+                        removed_count += 1
+            
+            db.session.commit()
+            flash(f"Limpeza concluída! {removed_count} registros duplicados removidos.")
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro durante limpeza: {str(e)}")
+        
+        return redirect(url_for('admin_auth.cleanup_duplicates'))

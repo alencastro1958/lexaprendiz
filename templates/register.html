@@ -105,9 +105,11 @@ function validateCPF(cpf) {
 // Validação no envio do formulário
 document.getElementById('register-form').addEventListener('submit', function(e) {
     const cpfInput = document.querySelector('input[name="cpf"]');
+    const emailInput = document.querySelector('input[name="email"]');
     const cpf = cpfInput.value.replace(/[^0-9]/g, '');
+    const email = emailInput.value.trim().toLowerCase();
     
-    // Validação de tamanho
+    // Validação de tamanho do CPF
     if (cpf.length !== 11) {
         e.preventDefault();
         alert(`CPF deve ter exatamente 11 dígitos. Você digitou ${cpf.length} dígitos.`);
@@ -115,7 +117,7 @@ document.getElementById('register-form').addEventListener('submit', function(e) 
         return false;
     }
     
-    // Validação matemática
+    // Validação matemática do CPF
     if (!validateCPF(cpf)) {
         e.preventDefault();
         alert('CPF inválido. Digite um CPF válido.');
@@ -123,9 +125,35 @@ document.getElementById('register-form').addEventListener('submit', function(e) 
         return false;
     }
     
+    // Validação de formato do email
+    if (!email.includes('@') || !email.includes('.')) {
+        e.preventDefault();
+        alert('Email inválido. Digite um email válido.');
+        emailInput.focus();
+        return false;
+    }
+    
+    // Verificação adicional de duplicatas (baseada em localStorage para sessão atual)
+    const submittedData = localStorage.getItem('lastSubmittedData');
+    const currentData = JSON.stringify({email: email, cpf: cpf});
+    
+    if (submittedData === currentData) {
+        e.preventDefault();
+        alert('Dados já foram enviados recentemente. Aguarde ou tente fazer login.');
+        return false;
+    }
+    
+    // Salva os dados para prevenir re-submissão
+    localStorage.setItem('lastSubmittedData', currentData);
+    
     // Desabilita botão para evitar duplo envio
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('submitBtn').textContent = 'Cadastrando...';
+    
+    // Remove os dados salvos após 5 segundos (caso haja erro)
+    setTimeout(() => {
+        localStorage.removeItem('lastSubmittedData');
+    }, 5000);
 });
 
 // Consulta ViaCEP ao sair do campo CEP
