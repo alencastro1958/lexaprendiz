@@ -216,6 +216,48 @@ def debug_database():
             "timestamp": str(__import__('datetime').datetime.now())
         })
 
+@app.route("/test/simple-register", methods=["GET", "POST"])
+def test_simple_register():
+    """Teste simples de cadastro para debug"""
+    if request.method == "GET":
+        return '''
+        <html>
+        <body>
+        <h2>Teste Simples de Cadastro</h2>
+        <form method="POST">
+            Email: <input name="email" type="email" required><br><br>
+            CPF: <input name="cpf" type="text" required><br><br>
+            Nome: <input name="name" type="text" required><br><br>
+            Senha: <input name="password" type="password" required><br><br>
+            <button type="submit">Cadastrar Teste</button>
+        </form>
+        </body>
+        </html>
+        '''
+    
+    # POST - processar cadastro
+    try:
+        from flask_bcrypt import Bcrypt
+        bcrypt = Bcrypt()
+        
+        email = request.form.get('email')
+        cpf = request.form.get('cpf')
+        name = request.form.get('name')
+        password = request.form.get('password')
+        
+        # Hash da senha
+        password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+        
+        # Criar usuário
+        user = User(email=email, cpf=cpf, name=name, password=password_hash)
+        db.session.add(user)
+        db.session.commit()
+        
+        return f"<h2>SUCESSO!</h2><p>Usuário criado com ID: {user.id}</p><p>Email: {user.email}</p><p>CPF: {user.cpf}</p>"
+        
+    except Exception as e:
+        return f"<h2>ERRO!</h2><p>{str(e)}</p>"
+
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
