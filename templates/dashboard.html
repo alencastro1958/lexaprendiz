@@ -8,45 +8,102 @@
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">⚖️ LexAprendiz</a>
+            <a class="navbar-brand" href="/dashboard">🤖 LexAprendiz</a>
+            <div class="navbar-text d-none d-md-block">
+                <small>Assistente Jurídico - Lei da Aprendizagem</small>
+            </div>
             <div class="d-flex">
-                <a href="/profile" class="btn btn-outline-light me-2">Meu perfil</a>
-                {% if is_admin %}
-                <a href="/admin" class="btn btn-outline-light me-2">Admin</a>
-                <a href="/admin/export/users.csv" class="btn btn-warning me-2">Exportar usuários (CSV)</a>
-                {% endif %}
-                <a href="/logout" class="btn btn-outline-light">Sair</a>
+                <a href="/profile" class="btn btn-outline-light me-2">
+                    <i class="bi bi-person"></i> Meu Perfil
+                </a>
+                <a href="/logout" class="btn btn-outline-light">
+                    <i class="bi bi-box-arrow-right"></i> Sair
+                </a>
             </div>
         </div>
     </nav>
 
     <div class="container mt-4">
-        <h3 class="mb-3">📚 Faça sua pergunta sobre a Lei da Aprendizagem</h3>
-        <div class="alert alert-warning" role="alert">
-            Antes de perguntar, garanta que seu perfil está completo com nome, CPF, cidade e UF. <a href="/profile" class="alert-link">Clique aqui</a> para atualizar.
-        </div>
-        <form method="POST" class="mb-4">
-            <textarea name="pergunta" rows="4" class="form-control" placeholder="Digite sua dúvida..." required>{{ pergunta }}</textarea>
-            <button type="submit" class="btn btn-primary mt-2">Perguntar</button>
-        </form>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-4">
+                    <h2 class="text-primary">🤖 LexAprendiz</h2>
+                    <p class="lead">Seu assistente especializado em Lei da Aprendizagem</p>
+                    <small class="text-muted">Faça perguntas sobre Lei nº 10.097/2000 e normas correlatas</small>
+                </div>
+                
+                {% if not (current_user.name and current_user.cpf and current_user.city and current_user.state) %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Complete seu perfil!</strong> 
+                    Para usar o assistente, é necessário ter nome, CPF, cidade e UF cadastrados.
+                    <a href="/profile" class="alert-link">Clique aqui para completar</a>
+                </div>
+                {% endif %}
 
-        {% if resposta %}
-        <div class="alert alert-info">
-            <strong>Resposta:</strong>
-            <p>{{ resposta }}</p>
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Faça sua pergunta</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="mb-3">
+                                <textarea name="pergunta" rows="4" class="form-control" 
+                                          placeholder="Digite sua dúvida sobre a Lei da Aprendizagem..." 
+                                          required>{{ pergunta }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Perguntar ao LexAprendiz
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {% if resposta %}
+                <div class="card mt-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-robot"></i> Resposta do LexAprendiz</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="resposta-content">
+                            {{ resposta | nl2br | safe }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if historico %}
+        <div class="row justify-content-center mt-5">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Histórico de Conversas</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for item in historico %}
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="row">
+                                <div class="col-12">
+                                    <strong class="text-primary">Você perguntou:</strong>
+                                    <p class="mb-2">{{ item.content }}</p>
+                                    
+                                    <strong class="text-success">LexAprendiz respondeu:</strong>
+                                    <p class="mb-2">{{ item.response | truncate(200) }}...</p>
+                                    
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar"></i> {{ item.timestamp.strftime('%d/%m/%Y às %H:%M') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
         {% endif %}
-
-        <h5 class="mt-5">🕘 Histórico de perguntas</h5>
-        <ul class="list-group">
-            {% for item in historico %}
-            <li class="list-group-item">
-                <strong>Pergunta:</strong> {{ item.content }}<br>
-                <strong>Resposta:</strong> {{ item.response }}<br>
-                <small class="text-muted">Feita em {{ item.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
-            </li>
-            {% endfor %}
-        </ul>
     </div>
 </body>
 </html>

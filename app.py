@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from models import db, User, Question
 from auth import auth, bcrypt
+from admin_auth import admin_auth
 from sqlalchemy import text
 from sqlalchemy import inspect
 import urllib.parse
@@ -51,6 +52,7 @@ login_manager.login_view = "auth.login"
 login_manager.init_app(app)
 
 app.register_blueprint(auth)
+app.register_blueprint(admin_auth)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -219,9 +221,7 @@ def dashboard():
             resposta = f"Erro ao processar sua pergunta: {str(e)}"
 
     historico = Question.query.filter_by(user_id=current_user.id).order_by(Question.timestamp.desc()).all()
-    admins = os.getenv("ADMIN_EMAILS", "")
-    is_admin = current_user.is_authenticated and (current_user.email or "").lower() in [e.strip().lower() for e in admins.split(",") if e.strip()]
-    return render_template("dashboard.html", resposta=resposta, pergunta=pergunta, historico=historico, is_admin=is_admin)
+    return render_template("dashboard.html", resposta=resposta, pergunta=pergunta, historico=historico)
 
 # Public health check endpoint for Render
 @app.route("/healthz", methods=["GET"])  # nosec - simple liveness/readiness
@@ -257,42 +257,11 @@ with app.app_context():
     # init admin after db
     setup_admin(app)
 
-def _is_admin() -> bool:
-    if not current_user.is_authenticated:
-        return False
-    admins = os.getenv("ADMIN_EMAILS", "")
-    return (current_user.email or "").lower() in [e.strip().lower() for e in admins.split(",") if e.strip()]
-
-@app.route("/admin/export/users.csv")
-@login_required
-def export_users_csv():
-    if not _is_admin():
-        return redirect(url_for('auth.login'))
-    rows = User.query.with_entities(
-        User.id, User.name, User.email, User.cpf, User.city, User.state,
-        User.cep, User.address, User.number, User.complement, User.neighborhood
-    ).order_by(User.id).all()
-    def generate():
-        yield "id,nome,email,cpf,cidade,estado,cep,endereco,numero,complemento,bairro\n"
-        for r in rows:
-            # Escape commas and quotes as needed (basic handling)
-            vals = [
-                str(r.id),
-                (r.name or "").replace('"','""'),
-                (r.email or "").replace('"','""'),
-                (r.cpf or "").replace('"','""'),
-                (r.city or "").replace('"','""'),
-                (r.state or "").replace('"','""'),
-                (r.cep or "").replace('"','""'),
-                (r.address or "").replace('"','""'),
-                (r.number or "").replace('"','""'),
-                (r.complement or "").replace('"','""'),
-                (r.neighborhood or "").replace('"','""'),
-            ]
-            yield ",".join([f'"{v}"' for v in vals]) + "\n"
-    return Response(generate(), mimetype='text/csv', headers={
-        'Content-Disposition': 'attachment; filename=usuarios_lexaprendiz.csv'
-    })
+with app.app_context():
+    db.create_all()
+    _ensure_profile_columns()
+    # init admin after db
+    setup_admin(app)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
