@@ -112,10 +112,7 @@ def index():
 def dashboard():
     resposta = ""
     pergunta = ""
-    # Exigir perfil completo
-    if not (current_user.name and current_user.cpf and current_user.city and current_user.state):
-        flash("Complete seu perfil antes de fazer perguntas.")
-        return redirect(url_for('auth.profile'))
+    # Perfil não é mais obrigatório para fazer perguntas
 
     if request.method == "POST":
         pergunta = request.form["pergunta"]
