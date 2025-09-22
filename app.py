@@ -1,8 +1,6 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify, Response, flash
 from flask_login import LoginManager, login_required, current_user
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
 from dotenv import load_dotenv
 from openai import OpenAI
 from models import db, User, Question
@@ -54,39 +52,22 @@ login_manager.init_app(app)
 app.register_blueprint(auth)
 app.register_blueprint(admin_auth)
 
+# Filtro personalizado para quebras de linha
+@app.template_filter('nl2br')
+def nl2br_filter(text):
+    """Converte quebras de linha em <br>"""
+    if text:
+        return text.replace('\n', '<br>')
+    return text
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-class SecureModelView(ModelView):
-    def is_accessible(self):
-        if not current_user.is_authenticated:
-            return False
-        admins = os.getenv("ADMIN_EMAILS", "").split(",")
-        admins = [e.strip().lower() for e in admins if e.strip()]
-        return (current_user.email or "").lower() in admins
-
-    def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for('auth.login'))
-
-
-class UserAdminView(SecureModelView):
-    column_searchable_list = ["email", "name", "cpf", "city", "state"]
-    column_filters = ["state", "city"]
-    column_list = ("id", "name", "email", "cpf", "city", "state")
-    form_columns = ("name", "email", "cpf", "city", "state")
-
-class QuestionAdminView(SecureModelView):
-    column_searchable_list = ["content", "response"]
-    column_filters = ["timestamp", "user_id"]
-    column_list = ("id", "user_id", "timestamp", "content")
-
-def setup_admin(app):
-    admin = Admin(app, name="LexAprendiz Admin", template_mode="bootstrap4")
-    admin.add_view(UserAdminView(User, db.session))
-    admin.add_view(QuestionAdminView(Question, db.session))
-    return admin
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 def _ensure_profile_columns():
     """Add new User profile columns if missing (works for Postgres and SQLite)."""
@@ -254,14 +235,6 @@ def debug_admin():
 with app.app_context():
     db.create_all()
     _ensure_profile_columns()
-    # init admin after db
-    setup_admin(app)
-
-with app.app_context():
-    db.create_all()
-    _ensure_profile_columns()
-    # init admin after db
-    setup_admin(app)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

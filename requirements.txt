@@ -6,5 +6,4 @@ python-dotenv
 openai
 gunicorn
 psycopg2-binary
-flask-admin
 requests
