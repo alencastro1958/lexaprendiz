@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>LexAprendiz - Gestão de Usuários</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/admin/">
+                <i class="bi bi-shield-check"></i> LexAprendiz Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin/">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a class="nav-link active" href="/admin/users">
+                    <i class="bi bi-people"></i> Usuários
+                </a>
+                <a class="nav-link" href="/admin/export/users.csv">
+                    <i class="bi bi-download"></i> Exportar
+                </a>
+                <a class="nav-link" href="/" target="_blank">
+                    <i class="bi bi-globe"></i> Ver Site
+                </a>
+                <a class="nav-link" href="/admin/logout">
+                    <i class="bi bi-box-arrow-right"></i> Sair
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="bi bi-people-fill"></i> Gestão de Usuários</h1>
+                    <a href="/admin/export/users.csv" class="btn btn-success">
+                        <i class="bi bi-download"></i> Exportar CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Busca -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <form method="GET" class="d-flex">
+                    <input type="text" name="search" class="form-control me-2" 
+                           placeholder="Buscar por nome, email ou CPF..." 
+                           value="{{ search }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                    {% if search %}
+                    <a href="/admin/users" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-x"></i> Limpar
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="col-md-6 text-end">
+                <span class="text-muted">
+                    Total: {{ users.total }} usuário(s)
+                    {% if search %}
+                        | Encontrados: {{ users.items|length }}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Tabela de usuários -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        {% if users.items %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nome</th>
+                                            <th>Email</th>
+                                            <th>CPF</th>
+                                            <th>Cidade/UF</th>
+                                            <th>Perguntas</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users.items %}
+                                        <tr>
+                                            <td>{{ user.id }}</td>
+                                            <td>
+                                                {{ user.name or '<span class="text-muted">Não informado</span>' | safe }}
+                                            </td>
+                                            <td>{{ user.email }}</td>
+                                            <td>
+                                                {% if user.cpf %}
+                                                    {{ user.cpf }}
+                                                {% else %}
+                                                    <span class="text-muted">Não informado</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if user.city and user.state %}
+                                                    {{ user.city }}/{{ user.state }}
+                                                {% else %}
+                                                    <span class="text-muted">Não informado</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">
+                                                    {{ user.questions|length }} pergunta(s)
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="/admin/users/{{ user.id }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i> Ver Detalhes
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Paginação -->
+                            {% if users.pages > 1 %}
+                            <nav aria-label="Paginação">
+                                <ul class="pagination justify-content-center mt-4">
+                                    {% if users.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('admin_auth.admin_users', page=users.prev_num, search=search) }}">
+                                                Anterior
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for page_num in users.iter_pages() %}
+                                        {% if page_num %}
+                                            {% if page_num != users.page %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ url_for('admin_auth.admin_users', page=page_num, search=search) }}">
+                                                        {{ page_num }}
+                                                    </a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item active">
+                                                    <span class="page-link">{{ page_num }}</span>
+                                                </li>
+                                            {% endif %}
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if users.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('admin_auth.admin_users', page=users.next_num, search=search) }}">
+                                                Próximo
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-people display-1 text-muted"></i>
+                                <h3 class="text-muted mt-3">
+                                    {% if search %}
+                                        Nenhum usuário encontrado
+                                    {% else %}
+                                        Nenhum usuário cadastrado
+                                    {% endif %}
+                                </h3>
+                                {% if search %}
+                                    <p class="text-muted">Tente uma busca diferente</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
