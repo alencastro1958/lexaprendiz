@@ -103,57 +103,80 @@ function validateCPF(cpf) {
 }
 
 // Validação no envio do formulário
-document.getElementById('register-form').addEventListener('submit', function(e) {
+document.getElementById('register-form').addEventListener('submit', async function(e) {
+    e.preventDefault(); // Sempre previne o envio inicial
+    
     const cpfInput = document.querySelector('input[name="cpf"]');
     const emailInput = document.querySelector('input[name="email"]');
+    const submitBtn = document.getElementById('submitBtn');
     const cpf = cpfInput.value.replace(/[^0-9]/g, '');
     const email = emailInput.value.trim().toLowerCase();
     
-    // Validação de tamanho do CPF
-    if (cpf.length !== 11) {
-        e.preventDefault();
-        alert(`CPF deve ter exatamente 11 dígitos. Você digitou ${cpf.length} dígitos.`);
-        cpfInput.focus();
-        return false;
+    // Desabilita botão
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Verificando...';
+    
+    try {
+        // 1. Validações locais primeiro
+        if (cpf.length !== 11) {
+            alert(`CPF deve ter exatamente 11 dígitos. Você digitou ${cpf.length} dígitos.`);
+            cpfInput.focus();
+            return;
+        }
+        
+        if (!validateCPF(cpf)) {
+            alert('CPF inválido. Digite um CPF válido.');
+            cpfInput.focus();
+            return;
+        }
+        
+        if (!email.includes('@') || !email.includes('.')) {
+            alert('Email inválido. Digite um email válido.');
+            emailInput.focus();
+            return;
+        }
+        
+        // 2. Verificação de duplicatas no servidor
+        const response = await fetch(`/api/check-duplicates?email=${encodeURIComponent(email)}&cpf=${encodeURIComponent(cpf)}`);
+        const data = await response.json();
+        
+        if (!data.can_register) {
+            alert(`BLOQUEADO: ${data.message}. Cada email e CPF podem ter apenas uma conta.`);
+            if (data.email_exists) emailInput.focus();
+            else if (data.cpf_exists) cpfInput.focus();
+            return;
+        }
+        
+        // 3. Verificação localStorage (sessão)
+        const submittedData = localStorage.getItem('lastSubmittedData');
+        const currentData = JSON.stringify({email: email, cpf: cpf});
+        
+        if (submittedData === currentData) {
+            alert('Dados já foram enviados recentemente. Aguarde ou tente fazer login.');
+            return;
+        }
+        
+        // 4. Tudo OK - pode enviar
+        localStorage.setItem('lastSubmittedData', currentData);
+        submitBtn.textContent = 'Cadastrando...';
+        
+        // Envia o formulário
+        this.submit();
+        
+    } catch (error) {
+        console.error('Erro na verificação:', error);
+        alert('Erro ao verificar dados. Tente novamente.');
+    } finally {
+        if (submitBtn.disabled) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Cadastrar';
+        }
+        
+        // Remove os dados salvos após 5 segundos
+        setTimeout(() => {
+            localStorage.removeItem('lastSubmittedData');
+        }, 5000);
     }
-    
-    // Validação matemática do CPF
-    if (!validateCPF(cpf)) {
-        e.preventDefault();
-        alert('CPF inválido. Digite um CPF válido.');
-        cpfInput.focus();
-        return false;
-    }
-    
-    // Validação de formato do email
-    if (!email.includes('@') || !email.includes('.')) {
-        e.preventDefault();
-        alert('Email inválido. Digite um email válido.');
-        emailInput.focus();
-        return false;
-    }
-    
-    // Verificação adicional de duplicatas (baseada em localStorage para sessão atual)
-    const submittedData = localStorage.getItem('lastSubmittedData');
-    const currentData = JSON.stringify({email: email, cpf: cpf});
-    
-    if (submittedData === currentData) {
-        e.preventDefault();
-        alert('Dados já foram enviados recentemente. Aguarde ou tente fazer login.');
-        return false;
-    }
-    
-    // Salva os dados para prevenir re-submissão
-    localStorage.setItem('lastSubmittedData', currentData);
-    
-    // Desabilita botão para evitar duplo envio
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('submitBtn').textContent = 'Cadastrando...';
-    
-    // Remove os dados salvos após 5 segundos (caso haja erro)
-    setTimeout(() => {
-        localStorage.removeItem('lastSubmittedData');
-    }, 5000);
 });
 
 // Consulta ViaCEP ao sair do campo CEP
