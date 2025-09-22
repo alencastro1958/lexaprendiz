@@ -36,6 +36,7 @@ def register():
         
         # Limpa e valida CPF
         cpf_clean = clean_cpf(cpf_raw)
+        print(f"DEBUG: CPF raw: '{cpf_raw}', CPF clean: '{cpf_clean}', Valid: {validate_cpf(cpf_clean)}")
         if not validate_cpf(cpf_clean):
             flash("CPF inválido. Por favor, verifique os números digitados.")
             return render_template("register.html")
