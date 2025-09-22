@@ -54,11 +54,13 @@ def login():
             password_valid = bcrypt.check_password_hash(user.password, password)
             print(f"DEBUG LOGIN: Senha válida: {password_valid}")
             if password_valid:
-                login_user(user)
+                login_user(user, remember=True)
                 print(f"DEBUG LOGIN: Login realizado com sucesso")
-                return redirect(url_for("dashboard"))
+                print(f"DEBUG LOGIN: Current user authenticated: {current_user.is_authenticated}")
+                flash("Login realizado com sucesso!", "success")
+                return redirect("/dashboard")
         print(f"DEBUG LOGIN: Login falhou")
-        flash("Login inválido.")
+        flash("Email ou senha incorretos.", "danger")
     return render_template("login.html")
 
 @auth.route("/register", methods=["GET", "POST"])
@@ -160,10 +162,15 @@ def register():
             print(f"DEBUG CADASTRO: Commit realizado, usuário ID: {user.id}")
             
             # Login automático após cadastro
-            login_user(user)
+            login_user(user, remember=True)
             print(f"DEBUG CADASTRO: Login automático realizado para usuário ID: {user.id}")
+            print(f"DEBUG CADASTRO: User autenticado: {user.is_authenticated}")
             flash("Cadastro realizado com sucesso! Bem-vindo ao LexAprendiz!")
-            return redirect(url_for("dashboard"))
+            
+            # Força redirecionamento direto sem usar url_for
+            from flask import make_response
+            response = make_response(redirect("/dashboard"))
+            return response
         except Exception as e:
             print(f"DEBUG CADASTRO: Erro durante cadastro: {str(e)}")
             db.session.rollback()

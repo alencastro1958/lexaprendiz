@@ -258,6 +258,77 @@ def test_simple_register():
     except Exception as e:
         return f"<h2>ERRO!</h2><p>{str(e)}</p>"
 
+@app.route("/test/create-test-user")
+def create_test_user():
+    """Cria um usuário de teste para debug"""
+    try:
+        # Verificar se já existe
+        existing = User.query.filter_by(email="teste@teste.com").first()
+        if existing:
+            return f"<h2>USUÁRIO JÁ EXISTE!</h2><p>Email: {existing.email}</p><p><a href='/test/auto-login'>Fazer Login</a></p>"
+        
+        # Criar usuário de teste
+        from flask_bcrypt import Bcrypt
+        bcrypt = Bcrypt()
+        password_hash = bcrypt.generate_password_hash("123456").decode("utf-8")
+        
+        user = User(
+            email="teste@teste.com",
+            password=password_hash,
+            name="Usuário Teste",
+            cpf="12345678901",
+            city="São Paulo",
+            state="SP"
+        )
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        return f'''
+        <h2>USUÁRIO CRIADO COM SUCESSO!</h2>
+        <p>Email: teste@teste.com</p>
+        <p>Senha: 123456</p>
+        <p>ID: {user.id}</p>
+        <p><a href="/test/auto-login">Login Automático</a></p>
+        <p><a href="/login">Login Manual</a></p>
+        '''
+    except Exception as e:
+        return f"<h2>ERRO!</h2><p>{str(e)}</p>"
+
+@app.route("/test/auto-login")
+def test_auto_login():
+    """Testa login automático para debug"""
+    from flask_login import login_user
+    try:
+        # Buscar o primeiro usuário
+        user = User.query.first()
+        if user:
+            login_user(user, remember=True)
+            return f'''
+            <h2>LOGIN AUTOMÁTICO REALIZADO!</h2>
+            <p>Usuário: {user.email}</p>
+            <p>Autenticado: {current_user.is_authenticated}</p>
+            <p><a href="/dashboard">Ir para Dashboard</a></p>
+            <p><a href="/test/login-redirect">Testar Redirecionamento</a></p>
+            '''
+        else:
+            return "<h2>NENHUM USUÁRIO ENCONTRADO</h2><p>Primeiro registre um usuário em /test/simple-register</p>"
+    except Exception as e:
+        return f"<h2>ERRO!</h2><p>{str(e)}</p>"
+
+@app.route("/test/login-redirect")
+@login_required
+def test_login_redirect():
+    """Teste para verificar se o login funciona"""
+    return f'''
+    <h2>LOGIN FUNCIONANDO!</h2>
+    <p>Usuário autenticado: {current_user.is_authenticated}</p>
+    <p>Email: {current_user.email}</p>
+    <p>Nome: {current_user.name}</p>
+    <p>ID: {current_user.id}</p>
+    <a href="/dashboard">Ir para Dashboard</a>
+    '''
+
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():

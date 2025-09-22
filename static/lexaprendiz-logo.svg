@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+  <!-- Fundo do círculo -->
+  <circle cx="200" cy="80" r="75" fill="none" stroke="#d4af37" stroke-width="3"/>
+  <circle cx="200" cy="80" r="65" fill="none" stroke="#2c5aa0" stroke-width="2"/>
+  
+  <!-- Balança da justiça -->
+  <g transform="translate(200, 80)">
+    <!-- Haste central -->
+    <rect x="-2" y="-30" width="4" height="50" fill="#2c5aa0"/>
+    <!-- Travessa horizontal -->
+    <rect x="-35" y="-32" width="70" height="4" fill="#2c5aa0"/>
+    <!-- Prato esquerdo -->
+    <circle cx="-25" cy="-15" r="12" fill="none" stroke="#2c5aa0" stroke-width="2"/>
+    <path d="M -37,-15 A 12,12 0 0,0 -13,-15" fill="#2c5aa0"/>
+    <!-- Prato direito -->
+    <circle cx="25" cy="-15" r="12" fill="none" stroke="#2c5aa0" stroke-width="2"/>
+    <path d="M 13,-15 A 12,12 0 0,0 37,-15" fill="#2c5aa0"/>
+    <!-- Cordas -->
+    <line x1="-25" y1="-28" x2="-25" y2="-15" stroke="#2c5aa0" stroke-width="1"/>
+    <line x1="25" y1="-28" x2="25" y2="-15" stroke="#2c5aa0" stroke-width="1"/>
+    <!-- Topo decorativo -->
+    <polygon points="0,-35 -3,-30 3,-30" fill="#2c5aa0"/>
+  </g>
+  
+  <!-- Livro aberto -->
+  <g transform="translate(200, 140)">
+    <!-- Páginas do livro -->
+    <path d="M -40,10 Q -40,-10 0,-15 Q 40,-10 40,10 L 35,25 Q 20,30 0,25 Q -20,30 -35,25 Z" fill="#d4af37" stroke="#d4af37" stroke-width="2"/>
+    <!-- Separação central -->
+    <line x1="0" y1="-15" x2="0" y2="25" stroke="#2c5aa0" stroke-width="1"/>
+    <!-- Linhas das páginas -->
+    <line x1="-30" y1="0" x2="-5" y2="0" stroke="#2c5aa0" stroke-width="1" opacity="0.6"/>
+    <line x1="-30" y1="5" x2="-5" y2="5" stroke="#2c5aa0" stroke-width="1" opacity="0.6"/>
+    <line x1="-30" y1="10" x2="-5" y2="10" stroke="#2c5aa0" stroke-width="1" opacity="0.6"/>
+    <line x1="5" y1="0" x2="30" y2="0" stroke="#2c5aa0" stroke-width="1" opacity="0.6"/>
+    <line x1="5" y1="5" x2="30" y2="5" stroke="#2c5aa0" stroke-width="1" opacity="0.6"/>
+    <line x1="5" y1="10" x2="30" y2="10" stroke="#2c5aa0" stroke-width="1" opacity="0.6"/>
+  </g>
+  
+  <!-- Texto LEXAPRENDIZ -->
+  <text x="200" y="185" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#2c5aa0">
+    LEXAPRENDIZ
+  </text>
+  
+  <!-- Linha decorativa -->
+  <line x1="100" y1="195" x2="300" y2="195" stroke="#d4af37" stroke-width="2"/>
+</svg>
